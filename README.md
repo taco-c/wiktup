@@ -9,9 +9,11 @@ Hopefully just looking up words too sometime.
 wiktup <Language> <word>
 ```
 
+`Language` currently requires upper-casing same as are on the sections headings on wiktionary,
+so basically folowing English spelling rules.
+
 ## Dependencies
 
 + w3m
 + fzf
-+ wget
 

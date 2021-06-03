@@ -1,32 +1,30 @@
 #! /bin/sh
 
-get_lang() {
-#	str="(\$1==\"$1\"){flag=1} (\$1==\"Retrieved\"&&\$2==\"from\"||\$1~/-----/){flag=0} {if (flag==1) print \$0} "
-#	echo $str
-#	[ $1 = "Russian" ] && \
-		gawk "(\$1==\"$1\"){flag=1} (\$1==\"Retrieved\"&&\$2==\"from\"||\$1~/-----/){flag=0} {if (flag==1) print \$0} " && return
-#	[ $1 = "French" ] && \
-#		gawk '($1=="French"){flag=1} ($1=="Retrieved"&&$2=="from"||$1~/-----/){flag=0} {if (flag==1) print $0} ' && return
-	
-#	gawk '($1=="English"){flag=1} ($1=="Retrieved"&&$2=="from"||$1~/-----/){flag=0} {if (flag==1) print $0} '	
+dump()      { w3m "$1" -dump -no-graph -T text/html; }
+sanitize()  { sed 's/о́/о/g; s/а́/а/g'; }
+pick_word() { sanitize | fzf --layout=reverse; }
+
+parse_section() {
+	awk "(\$1==$1){flag=1} (\$1==\"Retrieved\"&&\$2==\"from\"||\$1~/-----/){flag=0} {if (flag==1) print \$0}"
 }
 
-_word=`wget "https://en.wiktionary.org/w/index.php?title=$2&printable=yes" 2>/dev/null -O - \
-	| w3m -dump -no-graph -T text/html \
-	| get_lang English \
+build_url() {
+	#echo "https://en.wiktionary.org/w/index.php?title=$1"
+	echo "https://en.wiktionary.org/wiki/$1"
+}
+
+#url=`build_url "$2"`
+
+word=`dump `build_url "$2"` \
+	| parse_section "English" \
 	| grep -Poi "\* $1: (.*?)(?=\s*\*|$)" \
-	| fzf --layout=reverse \
+	| pick_word \
 	| grep -Po '.*:\s+(.*?)(?=\s+\()' \
 	| awk -F": " '{print $2}'`
 
-[ -z $_word ] && exit
+[ -z "$word" ] && exit
 
-_url=`echo "https://en.wiktionary.org/w/index.php?title=$_word&printable=yes" | sed 's/ /%20/g'`
+url=`build_url "$word"`
 
-#lynx "$_url"
-
-wget "$_url" 2>/dev/null -O - \
-	| w3m -dump -no-graph -T text/html \
-	| get_lang "$1" \
-	| less
+dump "$url" | parse_section "$1" | less
 
