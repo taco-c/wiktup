@@ -13,9 +13,9 @@ build_url() {
 	echo "https://en.wiktionary.org/wiki/$1"
 }
 
-#url=`build_url "$2"`
+url=`build_url "$2"`
 
-word=`dump `build_url "$2"` \
+word=`dump "$url" \
 	| parse_section "English" \
 	| grep -Poi "\* $1: (.*?)(?=\s*\*|$)" \
 	| pick_word \
